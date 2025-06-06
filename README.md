@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Extraction Application - Refactored for New Database Schema
 
 ## Overview
@@ -403,3 +404,6 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 **Note**: This refactored version represents a significant improvement over the previous implementation. Please review the migration guide and API documentation before deploying to production.
 
+=======
+# extraction-app-1
+>>>>>>> 2cc0de32a9250b433e575dbbc78a76bce3b1cf06
