@@ -6,6 +6,7 @@ import { Card, CardContent } from "../../ui/card";
 import { AlertCircle, ChevronLeft, CheckCircle } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useStep } from '../StepContext';
+import { onboardingService } from '@/app/lib/services/onboardingService';
 
 const ReviewConfirmationPage: React.FC = () => {
     const router = useRouter();
@@ -30,10 +31,11 @@ const ReviewConfirmationPage: React.FC = () => {
         router.push('/components/FirstTimeSetUp/Anonymization');
     };
 
-    const handleCompleteSetup = () => {
+    const handleCompleteSetup = async () => {
         setIsDeploying(true);
         // Simulate deployment
-        setTimeout(() => {
+        setTimeout(async () => {
+            await onboardingService.complete();
             setIsDeploying(false);
             router.push('/components/Dashboard');
         }, 2000);

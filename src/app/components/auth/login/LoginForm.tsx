@@ -7,8 +7,9 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { loginSchema, type LoginFormValues } from "./../../../lib/validation";
-import {Input} from "@/app/components/ui/input";
-import {Button} from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Button } from "@/app/components/ui/button";
+import { getOnboardingStatus } from "@/app/hooks/useOnboarding";
 
 export default function LoginForm() {
   const [authError, setAuthError] = useState<string | null>(null);
@@ -45,8 +46,12 @@ export default function LoginForm() {
       }
       
       // If no error, login was successful
-      // Redirect to landing page
-      router.push('/components/FirstTimeSetUp/Landing');
+      const completed = getOnboardingStatus();
+      if (completed) {
+        router.push('/components/Dashboard');
+      } else {
+        router.push('/components/FirstTimeSetUp/Landing');
+      }
       
     } catch (error) {
       console.error("Login error:", error);
