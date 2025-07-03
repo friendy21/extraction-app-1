@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useConnections } from "../../../hooks/useConnections";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Badge } from "../../ui/badge";
@@ -61,6 +62,14 @@ type DropboxConfig = { appKey: string; appSecret: string; redirectUri: string };
 type SlackConfig = { clientId: string; clientSecret: string; redirectUri: string; scopes: string; workspaceId: string };
 type ZoomConfig = { clientId: string; clientSecret: string; redirectUri: string; accountId: string };
 type JiraConfig = { clientId: string; clientSecret: string; redirectUri: string; instanceUrl: string };
+
+type Platform = {
+  label: string;
+  icon: React.ReactNode;
+  description: string;
+  connectionKey: keyof ConnectionStatus;
+  serviceName: string;
+};
 
 type TestingStage = "initializing" | "validating" | "connecting" | "completed" | "error" | null;
 type TestStatus = { status: "success" | "error" | null; message: string; details: string; timestamp: string } | null;
@@ -184,6 +193,81 @@ const StatsModal: React.FC<{ isOpen: boolean; onClose: () => void; title: string
   );
 };
 
+const initialPlatforms: Platform[] = [
+  {
+    label: "Microsoft 365",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 23 23" className="bg-[#f3f2f1]">
+        <path fill="#F25022" d="M1 1h9v9H1z" />
+        <path fill="#80BA01" d="M13 1h9v9h-9z" />
+        <path fill="#02A4EF" d="M1 13h9v9H1z" />
+        <path fill="#FFB902" d="M13 13h9v9h-9z" />
+      </svg>
+    ),
+    description: "Connect to access emails, calendar, SharePoint, and Teams data.",
+    connectionKey: "microsoft365",
+    serviceName: "microsoft365",
+  },
+  {
+    label: "Google Workspace",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="bg-white">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.537.7 23 12 23z" />
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+      </svg>
+    ),
+    description: "Connect to access Gmail, Calendar, Drive, and Google Chat data.",
+    connectionKey: "googleWorkspace",
+    serviceName: "googleWorkspace",
+  },
+  {
+    label: "Dropbox",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" className="bg-[#0061ff]">
+        <path d="M12 14.56l4.07-3.32 4.43 2.94-4.43 2.94L12 14.56zm-8.5-.38l4.43-2.94 4.07 3.32-4.07 2.56L3.5 14.18zm8.5-7.37l4.07 3.32-4.07 2.56-4.07-2.56L12 6.81zm-4.07 5.88L3.5 9.75l4.43-2.94 4.07 2.56-4.07 3.32z" />
+      </svg>
+    ),
+    description: "Connect to access Dropbox files and sharing activities.",
+    connectionKey: "dropbox",
+    serviceName: "dropbox",
+  },
+  {
+    label: "Slack",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" className="bg-[#4A154B]">
+        <path d="M6 15a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0-6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm-6 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" />
+      </svg>
+    ),
+    description: "Connect to access Slack messages and activity data.",
+    connectionKey: "slack",
+    serviceName: "slack",
+  },
+  {
+    label: "Zoom",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" className="bg-[#2D8CFF]">
+        <path d="M16 8v8H8V8h8m0-2H8c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm4 2v8h-1V8h1m0-2h-1c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM5 8v8H4V8h1m0-2H4c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+      </svg>
+    ),
+    description: "Connect to access Zoom meeting and participant data.",
+    connectionKey: "zoom",
+    serviceName: "zoom",
+  },
+  {
+    label: "Jira",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" className="bg-[#0052CC]">
+        <path d="M11.53 2l-4.78 4.78 4.78 4.78 4.78-4.78L11.53 2zm-4.78 4.78L2 11.53l4.78 4.78 4.78-4.78-4.78-4.78zm9.56 0l-4.78 4.78 4.78 4.78L21.06 11.53l-4.78-4.78zm-4.78 4.78L6.74 16.31l4.78 4.78 4.78-4.78-4.78-4.78z" />
+      </svg>
+    ),
+    description: "Connect to access Jira issues, projects, and workflow data.",
+    connectionKey: "jira",
+    serviceName: "jira",
+  },
+];
+
 // Password Input Component
 const PasswordInput: React.FC<{ id: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; required?: boolean; placeholder?: string }> = ({ id, value, onChange, required = false, placeholder = "" }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -291,7 +375,12 @@ const ConnectionPage: React.FC = () => {
   const [zoomForm, setZoomForm] = useState<ZoomConfig>({ clientId: "zoom-client-12345", clientSecret: "zoom-secret-67890", redirectUri: typeof window !== "undefined" ? window.location.origin + "/auth/zoom/callback" : "", accountId: "zoom-account-12345" });
   const [jiraForm, setJiraForm] = useState<JiraConfig>({ clientId: "jira-client-12345", clientSecret: "jira-secret-67890", redirectUri: typeof window !== "undefined" ? window.location.origin + "/auth/jira/callback" : "", instanceUrl: "https://example.atlassian.net" });
   const [customAPIForm, setCustomAPIForm] = useState<Omit<CustomAPI, "id" | "name" | "isConnected">>({ apiUrl: "", apiKey: "", headers: '{"Content-Type": "application/json"}', authType: "Bearer" });
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [showConnectionRequiredTooltip, setShowConnectionRequiredTooltip] = useState(false);
+
+  const organizationId = process.env.NEXT_PUBLIC_DEFAULT_ORG_ID || "default-org";
+  const { data: fetchedConnections } = useConnections(organizationId);
 
   const isAnyConnected = React.useMemo(() => Object.values(connections).some(Boolean) || customAPIs.some((api) => api.isConnected), [connections, customAPIs]);
   const router = useRouter();
@@ -306,7 +395,24 @@ const ConnectionPage: React.FC = () => {
       setZoomForm((prev) => ({ ...prev, redirectUri: window.location.origin + "/auth/zoom/callback" }));
       setJiraForm((prev) => ({ ...prev, redirectUri: window.location.origin + "/auth/jira/callback" }));
     }
+    setPlatforms(initialPlatforms);
   }, []);
+
+  useEffect(() => {
+    if (fetchedConnections) {
+      const connState: ConnectionStatus = { ...connections };
+      const ids: Record<string, string> = { ...connectionIds };
+      fetchedConnections.forEach((c) => {
+        const key = c.service_name as keyof ConnectionStatus;
+        if (key) {
+          connState[key] = c.status === "connected";
+          ids[key] = c.connection_id;
+        }
+      });
+      setConnections(connState);
+      setConnectionIds(ids);
+    }
+  }, [fetchedConnections]);
 
   useEffect(() => {
     const hasVisitedBefore = sessionStorage.getItem("hasVisitedConnectionPage");
@@ -454,6 +560,17 @@ const ConnectionPage: React.FC = () => {
     }, 1500);
   };
 
+  const handleDrop = (dropIndex: number) => {
+    if (dragIndex === null || dragIndex === dropIndex) return;
+    setPlatforms((prev) => {
+      const updated = [...prev];
+      const [item] = updated.splice(dragIndex, 1);
+      updated.splice(dropIndex, 0, item);
+      return updated;
+    });
+    setDragIndex(null);
+  };
+
   const handleBack = () => { setCurrentStep(0); router.push("/components/FirstTimeSetUp/OrganizationSetup"); };
   const handleNext = () => { if (isAnyConnected) { setCurrentStep(2); router.push("/components/FirstTimeSetUp/employees"); } else setShowConnectionRequiredTooltip(true); };
 
@@ -461,7 +578,13 @@ const ConnectionPage: React.FC = () => {
     const isConnected = connections[connectionKey];
     const connectionId = connectionIds[connectionKey];
     return (
-      <Card className="bg-white border border-gray-200 shadow-md hover:shadow-xl rounded-lg transition-all duration-300">
+      <Card
+        className="bg-white border border-gray-200 shadow-md hover:shadow-xl rounded-lg transition-all duration-300"
+        draggable
+        onDragStart={() => setDragIndex(platforms.findIndex(p => p.connectionKey === connectionKey))}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={() => handleDrop(platforms.findIndex(p => p.connectionKey === connectionKey))}
+      >
         <CardHeader className="flex flex-row items-center gap-4">
           <div className="w-12 h-12 flex items-center justify-center rounded-md">{icon}</div>
           <div><CardTitle>{name}</CardTitle></div>
@@ -510,65 +633,8 @@ const ConnectionPage: React.FC = () => {
             <p className="text-muted-foreground mt-2">Connect to your workplace platforms to collect data for analysis.</p>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {renderPlatformCard(
-              "Microsoft 365",
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 23 23" className="bg-[#f3f2f1]">
-                <path fill="#F25022" d="M1 1h9v9H1z" />
-                <path fill="#80BA01" d="M13 1h9v9h-9z" />
-                <path fill="#02A4EF" d="M1 13h9v9H1z" />
-                <path fill="#FFB902" d="M13 13h9v9h-9z" />
-              </svg>,
-              "Connect to access emails, calendar, SharePoint, and Teams data.",
-              "microsoft365",
-              "microsoft365"
-            )}
-            {renderPlatformCard(
-              "Google Workspace",
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="bg-white">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-              </svg>,
-              "Connect to access Gmail, Calendar, Drive, and Google Chat data.",
-              "googleWorkspace",
-              "googleWorkspace"
-            )}
-            {renderPlatformCard(
-              "Dropbox",
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" className="bg-[#0061ff]">
-                <path d="M12 14.56l4.07-3.32 4.43 2.94-4.43 2.94L12 14.56zm-8.5-0.38l4.43-2.94 4.07 3.32-4.07 2.56L3.5 14.18zm8.5-7.37l4.07 3.32-4.07 2.56-4.07-2.56L12 6.81zm-4.07 5.88L3.5 9.75l4.43-2.94 4.07 2.56-4.07 3.32z" />
-              </svg>,
-              "Connect to access Dropbox files and sharing activities.",
-              "dropbox",
-              "dropbox"
-            )}
-            {renderPlatformCard(
-              "Slack",
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" className="bg-[#4A154B]">
-                <path d="M6 15a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0-6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm-6 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" />
-              </svg>,
-              "Connect to access Slack messages and activity data.",
-              "slack",
-              "slack"
-            )}
-            {renderPlatformCard(
-              "Zoom",
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" className="bg-[#2D8CFF]">
-                <path d="M16 8v8H8V8h8m0-2H8c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm4 2v8h-1V8h1m0-2h-1c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM5 8v8H4V8h1m0-2H4c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h1c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
-              </svg>,
-              "Connect to access Zoom meeting and participant data.",
-              "zoom",
-              "zoom"
-            )}
-            {renderPlatformCard(
-              "Jira",
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" className="bg-[#0052CC]">
-                <path d="M11.53 2l-4.78 4.78 4.78 4.78 4.78-4.78L11.53 2zm-4.78 4.78L2 11.53l4.78 4.78 4.78-4.78-4.78-4.78zm9.56 0l-4.78 4.78 4.78 4.78L21.06 11.53l-4.78-4.78zm-4.78 4.78L6.74 16.31l4.78 4.78 4.78-4.78-4.78-4.78z" />
-              </svg>,
-              "Connect to access Jira issues, projects, and workflow data.",
-              "jira",
-              "jira"
+            {platforms.map((p) =>
+              renderPlatformCard(p.label, p.icon, p.description, p.connectionKey, p.serviceName)
             )}
             {customAPIs.map((api) => (
               <CustomAPICard key={api.id} api={api} onConnect={() => connectCustomAPI(api.id)} onDisconnect={() => disconnectCustomAPI(api.id)} onSettings={() => showCustomAPISettingsModal(api.id)} onStats={() => showCustomAPIStatsModal(api.id)} onRename={(newName) => renameCustomAPI(api.id, newName)} onDelete={() => deleteCustomAPI(api.id)} />
