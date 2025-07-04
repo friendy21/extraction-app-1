@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { fetchSetupStatus } from "../../../hooks/useSetupStatus";
 import Link from "next/link";
 import { loginSchema, type LoginFormValues } from "./../../../lib/validation";
 import { Input } from "@/app/components/ui/input";
@@ -15,6 +17,7 @@ export default function LoginForm() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
   
   const {
     register,
@@ -33,13 +36,13 @@ export default function LoginForm() {
     try {
       setIsLoading(true);
       setAuthError(null);
-      
+
       const result = await signIn("credentials", {
         redirect: false,
         email: data.email,
         password: data.password,
       });
-      
+
       if (result?.error) {
         setAuthError("Invalid email or password");
         return;
@@ -53,6 +56,14 @@ export default function LoginForm() {
         router.push('/components/FirstTimeSetUp/Landing');
       }
       
+
+      const orgId = process.env.NEXT_PUBLIC_DEFAULT_ORG_ID || "default-org";
+      const isSetup = await queryClient.fetchQuery({
+        queryKey: ["setup-status", orgId],
+        queryFn: () => fetchSetupStatus(orgId),
+      });
+      router.push(isSetup ? '/components/Dashboard' : '/components/FirstTimeSetUp/Landing');
+
     } catch (error) {
       console.error("Login error:", error);
       setAuthError("An unexpected error occurred");
