@@ -9,8 +9,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { fetchSetupStatus } from "../../../hooks/useSetupStatus";
 import Link from "next/link";
 import { loginSchema, type LoginFormValues } from "./../../../lib/validation";
-import {Input} from "@/app/components/ui/input";
-import {Button} from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Button } from "@/app/components/ui/button";
+import { getOnboardingStatus } from "@/app/hooks/useOnboarding";
 
 export default function LoginForm() {
   const [authError, setAuthError] = useState<string | null>(null);
@@ -46,6 +47,15 @@ export default function LoginForm() {
         setAuthError("Invalid email or password");
         return;
       }
+      
+      // If no error, login was successful
+      const completed = getOnboardingStatus();
+      if (completed) {
+        router.push('/components/Dashboard');
+      } else {
+        router.push('/components/FirstTimeSetUp/Landing');
+      }
+      
 
       const orgId = process.env.NEXT_PUBLIC_DEFAULT_ORG_ID || "default-org";
       const isSetup = await queryClient.fetchQuery({

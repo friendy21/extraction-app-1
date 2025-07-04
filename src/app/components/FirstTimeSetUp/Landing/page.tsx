@@ -16,12 +16,19 @@ import {
 } from "lucide-react";
 import Image from 'next/image';
 import { useRouter } from "next/navigation";
+import { useOnboardingStatus } from "@/app/hooks/useOnboarding";
 
 export default function Landing() {
   const router = useRouter();
+  const { markCompleted } = useOnboardingStatus();
 
   const handleGetStarted = () => {
     router.push('/components/FirstTimeSetUp/OrganizationSetup');
+  };
+
+  const handleSkip = async () => {
+    await markCompleted();
+    router.push('/components/Dashboard');
   };
 
   return (
@@ -65,7 +72,7 @@ export default function Landing() {
                   Get Started
                   <ArrowRight className="h-4 w-4" />
                 </Button>
-                
+                <Button variant="outline" onClick={handleSkip}>Skip Setup</Button>
               </div>
             </div>
             

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Extraction Application - Refactored for New Database Schema
 
 ## Overview
@@ -234,7 +233,8 @@ await connectionsApi.syncDataSource(connection.id, {
 
 ## API Documentation
 
-Comprehensive API documentation is available in `API_DOCUMENTATION.md`. The documentation includes:
+Comprehensive API documentation is available in `API_DOCUMENTATION.md`. A minimal OpenAPI definition is provided in `docs/swagger.yaml`.
+The documentation includes:
 
 - Complete endpoint reference with examples
 - Data model specifications
@@ -295,6 +295,8 @@ npm run test:watch
 # Run tests with coverage
 npm run test:coverage
 ```
+
+The Jest configuration uses `ts-jest` to compile TypeScript tests. Ensure dependencies are installed by running `npm install` before executing the commands above.
 
 ### Building for Production
 
@@ -404,6 +406,3 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 **Note**: This refactored version represents a significant improvement over the previous implementation. Please review the migration guide and API documentation before deploying to production.
 
-=======
-# extraction-app-1
->>>>>>> 2cc0de32a9250b433e575dbbc78a76bce3b1cf06

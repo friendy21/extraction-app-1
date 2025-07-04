@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useConnections } from "../../../hooks/useConnections";
+import { usePlatforms, useSavePlatformOrder } from "../../../hooks/usePlatforms";
+
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Badge } from "../../ui/badge";
@@ -63,6 +65,7 @@ type SlackConfig = { clientId: string; clientSecret: string; redirectUri: string
 type ZoomConfig = { clientId: string; clientSecret: string; redirectUri: string; accountId: string };
 type JiraConfig = { clientId: string; clientSecret: string; redirectUri: string; instanceUrl: string };
 
+import { Platform } from "../../../lib/services/connectionService";
 type Platform = {
   label: string;
   icon: React.ReactNode;
@@ -70,6 +73,7 @@ type Platform = {
   connectionKey: keyof ConnectionStatus;
   serviceName: string;
 };
+
 
 type TestingStage = "initializing" | "validating" | "connecting" | "completed" | "error" | null;
 type TestStatus = { status: "success" | "error" | null; message: string; details: string; timestamp: string } | null;
@@ -379,6 +383,9 @@ const ConnectionPage: React.FC = () => {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [showConnectionRequiredTooltip, setShowConnectionRequiredTooltip] = useState(false);
 
+  const { data: platformOrder } = usePlatforms();
+  const { mutate: savePlatformOrder } = useSavePlatformOrder();
+
   const organizationId = process.env.NEXT_PUBLIC_DEFAULT_ORG_ID || "default-org";
   const { data: fetchedConnections } = useConnections(organizationId);
 
@@ -397,6 +404,17 @@ const ConnectionPage: React.FC = () => {
     }
     setPlatforms(initialPlatforms);
   }, []);
+
+  useEffect(() => {
+    if (platformOrder && platformOrder.length) {
+      const ordered = platformOrder.map((p) =>
+        initialPlatforms.find((ip) => ip.connectionKey === p.connectionKey) || p
+      );
+      setPlatforms(ordered);
+    } else {
+      setPlatforms(initialPlatforms);
+    }
+  }, [platformOrder]);
 
   useEffect(() => {
     if (fetchedConnections) {
@@ -566,6 +584,8 @@ const ConnectionPage: React.FC = () => {
       const updated = [...prev];
       const [item] = updated.splice(dragIndex, 1);
       updated.splice(dropIndex, 0, item);
+      savePlatformOrder(updated.map((p) => p.connectionKey));
+
       return updated;
     });
     setDragIndex(null);
@@ -634,6 +654,13 @@ const ConnectionPage: React.FC = () => {
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {platforms.map((p) =>
+              renderPlatformCard(
+                p.label,
+                p.icon,
+                p.description,
+                p.connectionKey as keyof ConnectionStatus,
+                p.serviceName
+              )
               renderPlatformCard(p.label, p.icon, p.description, p.connectionKey, p.serviceName)
             )}
             {customAPIs.map((api) => (
