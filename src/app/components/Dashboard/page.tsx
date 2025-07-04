@@ -6,6 +6,7 @@ import SystemOverview from './SystemOverview';
 import DataSourceStatus from './DataSourceStatus';
 import ImportantAlerts, { Alert } from './ImportantAlerts';
 import RecentActivity from './RecentActivity';
+import OnboardingGuard from '../OnboardingGuard';
 
 // Define user and session types
 interface User {
@@ -174,11 +175,12 @@ const DashboardPage: React.FC = () => {
   const currentUser = users.find(user => user.id === 'user1') || { name: '', avatar: '' };
 
   return (
-    <DashboardLayout 
-      userName={currentUser?.name} 
-      userAvatar={currentUser?.avatar}
-    >
-      <div className="p-6">
+    <OnboardingGuard requireCompleted>
+      <DashboardLayout
+        userName={currentUser?.name}
+        userAvatar={currentUser?.avatar}
+      >
+        <div className="p-6">
         <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
         
         {/* System Overview with Active Users Count and Session Management */}
@@ -207,7 +209,8 @@ const DashboardPage: React.FC = () => {
           <RecentActivity activeUserCount={users.length} />
         </div>
       </div>
-    </DashboardLayout>
+      </DashboardLayout>
+    </OnboardingGuard>
   );
 };
 

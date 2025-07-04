@@ -1,0 +1,34 @@
+openapi: 3.0.0
+info:
+  title: Extraction Application API
+  version: 2.0.0
+paths:
+  /organizations/{orgId}/connections:
+    get:
+      summary: List data source connections
+      parameters:
+        - in: path
+          name: orgId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Connection'
+components:
+  schemas:
+    Connection:
+      type: object
+      properties:
+        id:
+          type: string
+        serviceName:
+          type: string
+        status:
+          type: string

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, RefreshCw, Clock, Settings, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { useConnections } from '../../hooks/useConnections';
 
 interface DataSourceProps {
   icon: React.ReactNode;
@@ -361,6 +362,7 @@ const DataSourceStatus: React.FC<DataSourceStatusProps> = ({ addAlert }) => {
   const [filterConnected, setFilterConnected] = useState<boolean | null>(null);
   const [lastSyncTime, setLastSyncTime] = useState(new Date().toLocaleTimeString());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { data: fetchedConnections } = useConnections('org1');
   
   const toggleSettings = (id: string) => {
     if (activeSettings === id) {
@@ -566,6 +568,16 @@ const DataSourceStatus: React.FC<DataSourceStatusProps> = ({ addAlert }) => {
       isConnected: false
     },
   ];
+
+  if (fetchedConnections) {
+    dataSources = dataSources.map((source) => {
+      const c = fetchedConnections.find((conn) => conn.service_name === source.id);
+      if (c) {
+        return { ...source, isConnected: c.status === 'connected' };
+      }
+      return source;
+    });
+  }
 
   // Filter data sources
   const filteredDataSources = dataSources.filter(source => {
