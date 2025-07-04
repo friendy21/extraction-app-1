@@ -5,6 +5,7 @@ import "../../../globals.css"
 import MenuBar from '../MenuBar'
 import ClientWrapper from '../ClientWrapper'
 import { StepProvider } from '../StepContext'
+import OnboardingGuard from '../../OnboardingGuard'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -25,14 +26,16 @@ export default function AnonymizationLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${inter.className} flex flex-col min-h-screen`}>
-                <StepProvider initialStep={4}> 
-                    <ClientWrapper>
-                        <MenuBar />
-                        <main className="flex-grow flex-shrink-0">
-                            {children}
-                        </main>
-                    </ClientWrapper>
-                </StepProvider>
+                <OnboardingGuard>
+                    <StepProvider initialStep={4}>
+                        <ClientWrapper>
+                            <MenuBar />
+                            <main className="flex-grow flex-shrink-0">
+                                {children}
+                            </main>
+                        </ClientWrapper>
+                    </StepProvider>
+                </OnboardingGuard>
             </body>
         </html>
     )
