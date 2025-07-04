@@ -66,6 +66,7 @@ type ZoomConfig = { clientId: string; clientSecret: string; redirectUri: string;
 type JiraConfig = { clientId: string; clientSecret: string; redirectUri: string; instanceUrl: string };
 
 import { Platform } from "../../../lib/services/connectionService";
+
 type Platform = {
   label: string;
   icon: React.ReactNode;
@@ -661,6 +662,7 @@ const ConnectionPage: React.FC = () => {
                 p.connectionKey as keyof ConnectionStatus,
                 p.serviceName
               )
+
             )}
             {customAPIs.map((api) => (
               <CustomAPICard key={api.id} api={api} onConnect={() => connectCustomAPI(api.id)} onDisconnect={() => disconnectCustomAPI(api.id)} onSettings={() => showCustomAPISettingsModal(api.id)} onStats={() => showCustomAPIStatsModal(api.id)} onRename={(newName) => renameCustomAPI(api.id, newName)} onDelete={() => deleteCustomAPI(api.id)} />
