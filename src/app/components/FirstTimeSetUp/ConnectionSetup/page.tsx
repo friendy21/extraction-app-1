@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useConnections } from "../../../hooks/useConnections";
 import { usePlatforms, useSavePlatformOrder } from "../../../hooks/usePlatforms";
+
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Badge } from "../../ui/badge";
@@ -65,6 +66,15 @@ type ZoomConfig = { clientId: string; clientSecret: string; redirectUri: string;
 type JiraConfig = { clientId: string; clientSecret: string; redirectUri: string; instanceUrl: string };
 
 import { Platform } from "../../../lib/services/connectionService";
+
+type Platform = {
+  label: string;
+  icon: React.ReactNode;
+  description: string;
+  connectionKey: keyof ConnectionStatus;
+  serviceName: string;
+};
+
 
 type TestingStage = "initializing" | "validating" | "connecting" | "completed" | "error" | null;
 type TestStatus = { status: "success" | "error" | null; message: string; details: string; timestamp: string } | null;
@@ -393,6 +403,7 @@ const ConnectionPage: React.FC = () => {
       setZoomForm((prev) => ({ ...prev, redirectUri: window.location.origin + "/auth/zoom/callback" }));
       setJiraForm((prev) => ({ ...prev, redirectUri: window.location.origin + "/auth/jira/callback" }));
     }
+    setPlatforms(initialPlatforms);
   }, []);
 
   useEffect(() => {
@@ -575,6 +586,7 @@ const ConnectionPage: React.FC = () => {
       const [item] = updated.splice(dragIndex, 1);
       updated.splice(dropIndex, 0, item);
       savePlatformOrder(updated.map((p) => p.connectionKey));
+
       return updated;
     });
     setDragIndex(null);
@@ -650,6 +662,7 @@ const ConnectionPage: React.FC = () => {
                 p.connectionKey as keyof ConnectionStatus,
                 p.serviceName
               )
+
             )}
             {customAPIs.map((api) => (
               <CustomAPICard key={api.id} api={api} onConnect={() => connectCustomAPI(api.id)} onDisconnect={() => disconnectCustomAPI(api.id)} onSettings={() => showCustomAPISettingsModal(api.id)} onStats={() => showCustomAPIStatsModal(api.id)} onRename={(newName) => renameCustomAPI(api.id, newName)} onDelete={() => deleteCustomAPI(api.id)} />
