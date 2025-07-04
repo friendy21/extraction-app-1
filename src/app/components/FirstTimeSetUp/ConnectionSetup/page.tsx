@@ -661,7 +661,6 @@ const ConnectionPage: React.FC = () => {
                 p.connectionKey as keyof ConnectionStatus,
                 p.serviceName
               )
-              renderPlatformCard(p.label, p.icon, p.description, p.connectionKey, p.serviceName)
             )}
             {customAPIs.map((api) => (
               <CustomAPICard key={api.id} api={api} onConnect={() => connectCustomAPI(api.id)} onDisconnect={() => disconnectCustomAPI(api.id)} onSettings={() => showCustomAPISettingsModal(api.id)} onStats={() => showCustomAPIStatsModal(api.id)} onRename={(newName) => renameCustomAPI(api.id, newName)} onDelete={() => deleteCustomAPI(api.id)} />

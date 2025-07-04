@@ -463,8 +463,9 @@ const DepartmentsView: React.FC = () => {
         
         {/* Departments Table or Org Chart based on active tab */}
         {activeTab === 'list' ? (
-          /* Departments Table */
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <>
+            {/* Departments Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -564,6 +565,7 @@ const DepartmentsView: React.FC = () => {
             </button>
           </div>
         </div>
+          </>
         ) : (
           <OrganizationalChart 
             departments={departments} 
